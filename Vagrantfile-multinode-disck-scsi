@@ -1,0 +1,34 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Configuration section --------------------------------------------------------
+
+# Total number of Cloud Nodes
+CLOUD_NODES_COUNT = 3
+
+CLOUD_NODE_CPUS   = 2  # vCPUs per Cloud Node
+CLOUD_NODE_MEMORY = 2048  # 4GB plus ~200MB headroom 
+
+# End of Configuration section -------------------------------------------------
+
+Vagrant.configure("2") do |config|
+
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = ["~/.ssh/id_rsa", "~/.vagrant.d/insecure_private_key"]
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+  # PXE nodes
+  (1..CLOUD_NODES_COUNT).each do |i|
+  config.vm.define "node#{"%02d" % i}" do |node|
+    node.vm.box = "generic/ubuntu2004"
+    node.vm.provider :libvirt do |domain|
+      domain.default_prefix = ""
+      domain.cpus = CLOUD_NODE_CPUS
+      domain.memory = CLOUD_NODE_MEMORY
+      domain.storage :file, :size => '16G', :bus => 'scsi'  # Operating System
+      domain.storage :file, :size => '16G', :bus => 'scsi'  # Data disk (e.g. for Ceph OSD)
+      end
+    end
+  end
+end
