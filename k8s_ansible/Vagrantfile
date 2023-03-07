@@ -1,0 +1,60 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Configuration section --------------------------------------------------------
+
+# Total number of Cloud Nodes
+CLOUD_NODES_COUNT = 2
+
+CLOUD_NODE_CPUS   = 1  # vCPUs per Cloud Node
+CLOUD_NODE_MEMORY = 2048  # 4GB plus ~200MB headroom 
+
+# End of Configuration section -------------------------------------------------
+
+Vagrant.configure("2") do |config|
+
+  config.ssh.insert_key = false
+  config.ssh.private_key_path = ["~/.ssh/id_rsa", "~/.vagrant.d/insecure_private_key"]
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/authorized_keys"
+  config.vm.provision "file", source: "~/.ssh/id_rsa", destination: "~/.ssh/id_rsa"
+  config.vm.provision "file", source: "~/.ssh/id_rsa.pub", destination: "~/.ssh/id_rsa.pub"
+
+  # admin Server
+  config.vm.define "admin", primary: true do |admin|
+    admin.vm.box = "generic/ubuntu2004"
+    admin.vm.hostname = "admin"
+    admin.vm.network "private_network", ip: "192.168.121.10"
+    admin.vm.provider :libvirt do |domain|
+      domain.default_prefix = ""
+      domain.cpus = "1"
+      domain.memory = "2048"
+    end
+  end
+
+  # cluster
+  (1..CLOUD_NODES_COUNT).each do |i|
+  config.vm.define "node#{"%02d" % i}" do |node|
+    node.vm.box = "generic/ubuntu2004"
+    node.vm.hostname = "node#{"%02d" % i}"
+    node.vm.network "private_network", ip: "192.168.121.1#{"%02d" % i}"
+    node.vm.provider :libvirt do |domain|
+      domain.default_prefix = ""
+      domain.cpus = CLOUD_NODE_CPUS
+      domain.memory = CLOUD_NODE_MEMORY
+      domain.storage :file, :size => '16G', :bus => 'scsi'  # Operating System
+      domain.storage :file, :size => '16G', :bus => 'scsi'  # Data disk (e.g. for Ceph OSD)
+      end
+    end
+
+    config.vm.provision "ansible" do |ansible|
+      # ansible.verbose = "vvv"
+      ansible.extra_vars = { ansible_ssh_common_args: '-o StrictHostKeyChecking=no', ip_list: `vagrant ssh-config | grep HostName | awk '{print $2}'` }
+      ansible.playbook = "playbook.yml"
+      ansible.groups = {
+        "admin"                 => ["admin"]
+        # "cluster"               => ["node0[1:2]"],
+        # "all_groups:children"   => ["admin", "node[1:2]"]
+      }
+    end
+  end
+end

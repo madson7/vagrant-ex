@@ -1,0 +1,5 @@
+# vars file for vars
+
+VERSION_RKE: v1.4.1
+
+SSH_KEY: /home/vagrant/.ssh/id_rsa

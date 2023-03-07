@@ -1,0 +1,30 @@
+---
+# tasks file for role/admin
+
+- name: Garantir que o diretório /opt/config exista
+  become: yes
+  file:
+    path: /opt/config
+    state: directory
+    owner: vagrant
+    group: vagrant
+    mode: '0700'
+
+# - name: Baixar executável do RKE 
+#   become: yes
+#   wget:
+#     url: https://github.com/rancher/rke/releases/download/{{VERSION_RKE}}/rke_linux-amd64
+#     dest: /opt/config/rke
+#     owner: vagrant
+#     group: vagrant
+
+- name: Deixar o binário do RKE executável
+  become: yes
+  file:
+    path: /opt/config/rke
+    mode: "u+x,g+x"
+    owner: vagrant
+    group: vagrant
+
+
+

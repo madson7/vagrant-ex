@@ -1,0 +1,15 @@
+# tasks file for roles/admin
+
+# /opt/config/master_private_ips.txt
+
+- name: Print IP addresses
+  debug:
+    msg: "{{ item }}"
+  with_items: "{{ ip_list.split('\n') }}"
+
+
+# - name: Criar arquivo de configuração com os IPs dos hosts para o cluster k8s
+#   template:
+#     src: cluster.j2
+#     dest: /opt/config/cluster.yml
+#     mode: '0644'
