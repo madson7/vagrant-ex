@@ -4,7 +4,8 @@ ENV['VAGRANT_DEFAULT_PROVIDER'] = 'libvirt'
 
 Vagrant.configure("2") do |config|
   config.vm.box = "peru/windows-10-enterprise-x64-eval"
-  config.vm.box_version = "20230101.01"
+  # config.vm.box_version = "20230101.01"
 end
+
 
 #  https://plus.diolinux.com.br/t/material-de-apoio-winapps-linux-kvm-rdp/27596
